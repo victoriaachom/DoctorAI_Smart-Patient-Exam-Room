@@ -10,7 +10,7 @@ from collections import deque, Counter
 import csv
 from datetime import datetime
 from pathlib import Path
-from emotion_logger import EmotionVisitLogger
+from emotion_logger_spec_v01 import EmotionVisitLogger #change here from emotion_logger to emotion_logger_spec_v01 AB
 import statistics
 
 # ==========================
@@ -119,6 +119,7 @@ def main():
     logger = EmotionVisitLogger(
         emotion_labels=EMOTION_LABELS,
         metadata_fields=["patient_id", "visit_label"],
+        model_version="resnet34_5class_v3"  # new line added AB
     )
 
     # Ask who this is for
@@ -137,6 +138,9 @@ def main():
     # You can reduce resolution a bit for speed
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    # Track visit start time for duration calculation
+    visit_start_time = time.time()  # AB
 
     #prev_time = time.time()
 
@@ -235,11 +239,15 @@ def main():
         cap.release()
         cv2.destroyAllWindows()
 
+        # Calculate visit duration
+        visit_duration = time.time() - visit_start_time  # AB
+
         #--------VISIT SUMMARY LOGGING----------------------
         log_time_start = time.time()
         logger.log_visit(
             emotion_counts=emotion_counts,
             total_samples = total_samples,
+            visit_duration=visit_duration,  # AB
             meta={
                 "patient_id": patient_id,
                 "visit_label": visit_label,
